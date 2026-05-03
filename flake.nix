@@ -15,12 +15,6 @@
 
               todou = (hfinal.callPackage ./default.nix {}).overrideAttrs (old: {
                 nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ final.upx ];
-
-                # Run upx after install
-                postInstall = ''
-                  echo "Running UPX on: $out/bin/todou"
-                  upx --best --lzma $out/bin/todou || true
-                '';
               });
             };
         };
@@ -33,9 +27,11 @@
             configureFlags = drv.configureFlags or [] ++ [
               "--ghc-options=-optc-O2"
               "--ghc-options=-O2"
-              "--ghc-options=-optl=-s"  # Strip via linker
+              "--ghc-options=-optl=-s"                 # Strip via linker
               "--ghc-options=-split-sections"
-              "--ghc-options=-fomit-interface-pragmas"
+              "--ghc-options=-optl-Wl,--gc-sections"
+              "--ghc-options=-optl-Wl,--build-id=none" # Remove build-id
+              "--ghc-options=-optl-Wl,-R,.comment"     # Remove comment section
             ];
           }) (justStaticExecutables final.haskellPackages.todou);
         };
