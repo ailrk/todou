@@ -90,7 +90,6 @@ library
       , lucid
       , network-uri
       , scotty
-      , sqlite-simple
       , string-interpolate
       , text
       , time

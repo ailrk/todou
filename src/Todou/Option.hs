@@ -23,7 +23,6 @@ type ConnectionString = String
 data StorageOption
   = StorageFileSystem FilePath
   | StorageS3 Bucket
-  | StorageSqlite3 ConnectionString
   | StorageNull
   deriving (Show, Eq)
 
@@ -51,7 +50,6 @@ parseArgs args
                   asum
                     [ stripPrefix "dir:"    arg <&> StorageFileSystem
                     , stripPrefix "s3:"     arg <&> StorageS3 . Text.pack
-                    , stripPrefix "sqlite:" arg <&> StorageSqlite3
                     ]
             opts { storage = storage }
           Nothing  ->
@@ -72,7 +70,6 @@ checkArgs options = do
       unless dirExists do
         error ("invalid options, storage directory " <> dir <> " is invalid")
     StorageS3 _ -> pure ()
-    StorageSqlite3 _ -> pure ()
   when (options.port < 1024 || options.port > 65535) do
     error ("invalid port number " <> show options.port)
   pure options

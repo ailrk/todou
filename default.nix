@@ -15,7 +15,7 @@ mkDerivation {
     aeson amazonka amazonka-s3 base base64-bytestring bytestring
     conduit containers cookie cryptohash-sha256 cryptonite directory
     file-embed filepath http-types jwt lucid network-uri scotty
-    sqlite-simple string-interpolate text time wai wai-extra warp zlib
+    string-interpolate text time wai wai-extra warp zlib
   ];
   executableHaskellDepends = [ base ];
   testHaskellDepends = [

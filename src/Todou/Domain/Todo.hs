@@ -10,17 +10,12 @@ import Data.Map (Map)
 import Data.Aeson qualified as Aeson
 import Data.Map qualified as Map
 import Data.List (sort)
-import Database.SQLite.Simple.ToField (ToField (..))
-import Database.SQLite.Simple.FromField (FromField (..))
-import Database.SQLite.Simple (ToRow (..), FromRow (..))
-import Database.SQLite.Simple qualified as Sqlite
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
 import Codec.Compression.Zlib qualified as Zlib
 import Data.ByteString.Base64 qualified as B64
 import Data.Text.Encoding qualified as Text
 import Data.Text qualified as Text
-import Data.Functor ((<&>))
 
 
 ------------------------------
@@ -73,28 +68,6 @@ instance FromJSON Entry where
       <*> (o .: "detail")
       <*> (o .: "tags")
       <*> (o .: "completedDate")
-
-
-instance ToField EntryId where
-  toField (EntryId entryId) = toField entryId
-
-
-instance FromField EntryId where
-  fromField = fmap EntryId <$> fromField @Int
-
-
-instance ToRow Entry where
-  toRow (Entry { entryId, description, detail, tags, completedDate }) =
-    toRow (entryId, description, detail, Text.unwords tags, completedDate)
-
-
-instance FromRow Entry where
-  fromRow = Entry
-    <$> Sqlite.field
-    <*> Sqlite.field
-    <*> Sqlite.field
-    <*> (Sqlite.field @Text <&> Text.words)
-    <*> Sqlite.field
 
 
 -- | Todo entries for a single day

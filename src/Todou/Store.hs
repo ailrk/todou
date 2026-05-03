@@ -24,7 +24,6 @@ import Data.Functor ((<&>))
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe, maybeToList, isJust)
-import Data.String.Interpolate (iii, i)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
@@ -34,8 +33,6 @@ import Data.Time
       defaultTimeLocale,
       parseTimeM,
       formatTime, addDays, diffDays)
-import Database.SQLite.Simple (Only (..), type (:.) ((:.)), Query (..))
-import Database.SQLite.Simple qualified as Sqlite
 import Network.URI qualified as URI
 import System.Directory (listDirectory)
 import System.Environment qualified as Environment
@@ -198,30 +195,6 @@ formatMultiline txt =
 
 
 ------------------------------
--- Storage.Sqlite3
-
-
-createSqliteSchema :: Sqlite.Connection -> IO ()
-createSqliteSchema conn = do
-  Sqlite.execute_ conn [i| PRAGMA foreign_keys = ON; |]
-  Sqlite.execute_ conn [i| CREATE TABLE IF NOT EXISTS todo ( date TEXT PRIMARY KEY, UNIQUE(date)); |]
-  Sqlite.execute_ conn [iii|
-      CREATE TABLE IF NOT EXISTS entry
-        ( id             INTEGER KEY NOT NULL
-        , description    TEXT NOT NULL
-        , detail         TEXT
-        , tags           TEXT
-        , completed_date DATE
-        , todo_date      DATE NOT NULL
-        , UNIQUE(id, todo_date)
-        , FOREIGN KEY(todo_date) REFERENCES todo(date) ON DELETE CASCADE
-        );
-    |]
-  Sqlite.execute_ conn [i| CREATE INDEX IF NOT EXISTS idx_entry_todo_date ON entry(todo_date); |]
-  Sqlite.execute_ conn [i| CREATE INDEX IF NOT EXISTS idx_entry_todo_completed ON entry(todo_date, completed_date); |]
-
-
-------------------------------
 -- Storage.S3
 
 
@@ -254,7 +227,6 @@ createS3Env = do
 
 data Handle
   = FileSystemHandle FilePath (MVar Buffer)
-  | Sqlite3Handle Sqlite.Connection (MVar Buffer)
   | S3Handle Amazonka.Env Bucket (MVar Buffer)
 
 
@@ -275,21 +247,6 @@ createHandle options = do
                   files
       ref <- newMVar Buffer { todos = todos, dirtyCounts = 0 }
       pure $ FileSystemHandle dir ref
-
-    StorageSqlite3 connStr -> do
-      conn <- Sqlite.open connStr
-      createSqliteSchema conn
-      dates <- Sqlite.query_ @(Only Text) conn "SELECT date FROM todo"
-      let todos =
-            foldr (\(Only date) acc -> do
-                      case parseTimeM @Maybe @Day True defaultTimeLocale "%Y-%m-%d" (Text.unpack date) of
-                        Just day -> Map.insert day Nothing acc
-                        Nothing -> acc
-                  )
-                  mempty
-                  dates
-      ref <- newMVar Buffer { todos = todos, dirtyCounts = 0 }
-      pure $ Sqlite3Handle conn ref
 
     StorageS3 bucket -> do
       env <- createS3Env
@@ -313,7 +270,6 @@ createHandle options = do
 
 getBufferMVar :: Handle -> MVar Buffer
 getBufferMVar ((FileSystemHandle _ bufferMvar )) = bufferMvar
-getBufferMVar ((Sqlite3Handle _ bufferMvar ))    = bufferMvar
 getBufferMVar ((S3Handle _ _ bufferMvar ))       = bufferMvar
 
 
@@ -352,16 +308,6 @@ loadTodoFromStorage handle date buffer = do
         Just todo -> pure do
           buffer { todos = Map.alter (\_ -> TodoLoaded todo) date buffer.todos }
         Nothing -> pure buffer
-    Sqlite3Handle conn _ -> do
-      entries <- Sqlite.query conn
-        [i|SELECT id, description, detail, tags, completed_date FROM entry WHERE todo_date = (?); |] (Only dateStr)
-      let todo = Todo
-            { entries = entries
-            , date    = date
-            , dirty   = False
-            }
-      pure do
-        buffer { todos = Map.alter (\_ -> TodoLoaded todo) date buffer.todos }
     S3Handle env bucket _ -> do
       let request = Amazonka.newGetObject (Amazonka.BucketName bucket) (Amazonka.ObjectKey (Text.pack dateStr))
       chunks <- Amazonka.runResourceT do
@@ -402,33 +348,12 @@ flush handle = do
 
 
 flushOnDirty :: Handle -> Todo -> IO ()
-flushOnDirty handle todo@(Todo { entries, date }) = do
+flushOnDirty handle todo@(Todo { date }) = do
   let dateStr = formatTime defaultTimeLocale  "%Y-%m-%d" date
   case handle of
     FileSystemHandle dirPath _ -> do
       let path = dirPath </> dateStr <> ".todou"
       Text.writeFile path (dumpTodo todo)
-    Sqlite3Handle conn _ -> do
-      Sqlite.execute conn
-        [iii|
-              INSERT INTO todo (date) VALUES (?)
-              ON CONFLICT(date) DO NOTHING;
-        |] (Only date)
-      let ids = fmap (.entryId) entries
-      let placeholders = Query ("(" <> Text.intercalate "," (replicate (length ids) "?") <> ")")
-      Sqlite.execute conn
-        (" DELETE FROM entry where todo_date = (?) AND id NOT IN " <> placeholders)
-        (Only date :. ids)
-      Sqlite.executeMany conn
-        [iii|
-              INSERT INTO entry (todo_date, id, description, detail, tags, completed_date) VALUES (?,?,?,?,?,?)
-              ON CONFLICT(id, todo_date) DO UPDATE SET
-                description    = excluded.description,
-                detail         = excluded.detail,
-                tags           = excluded.tags,
-                completed_date = excluded.completed_date;
-        |]
-        $ fmap (Only date :.) entries
     S3Handle env bucket _ -> do
       let req = Amazonka.newPutObject
             (Amazonka.BucketName bucket)

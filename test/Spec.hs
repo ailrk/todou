@@ -12,12 +12,11 @@ import Data.ByteString qualified as ByteString
 import Data.ByteString.Base64 qualified as B64
 import Data.ByteString.Lazy qualified as LBS
 import Data.Char (isPrint, isSeparator)
-import Data.List (nubBy, sortOn)
+import Data.List (nubBy)
 import Data.Map qualified as Map
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Data.Time (Day, fromGregorian)
-import Database.SQLite.Simple qualified as Sqlite
 import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
 import Test.QuickCheck
@@ -188,27 +187,6 @@ integrationTest = do
         case Map.lookup day finalBuf.todos of
           Just (Just t) -> t.dirty `shouldBe` False
           _ -> expectationFailure "Todo missing from buffer after flush"
-
-  describe "SQLite3 Integration" do
-    it "performs a full save and reload cycle" $ property \todo -> do
-      conn <- Sqlite.open ":memory:"
-      createSqliteSchema conn
-
-      let day = todo.date
-      ref <- newMVar (Buffer (Map.singleton day (Just todo { dirty = True })) 1)
-      let handle = Sqlite3Handle conn ref
-
-      flush handle
-
-      modifyBuffer handle \b -> pure b { todos = Map.singleton day Nothing }
-
-      let sortEntries t = t { entries = sortOn (.entryId) t.entries } :: Todo
-
-      res <- loadTodo handle day
-
-      fmap sortEntries res `shouldBe` Just (sortEntries todo) { dirty = False }
-
-      Sqlite.close conn
 
 
 instance Arbitrary EntryId where
