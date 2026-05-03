@@ -9,7 +9,6 @@ import Data.Time (Day, formatTime, defaultTimeLocale)
 import Data.Map (Map)
 import Data.Aeson qualified as Aeson
 import Data.Map qualified as Map
-import Data.List (sort)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
 import Codec.Compression.Zlib qualified as Zlib
@@ -40,7 +39,7 @@ instance FromJSON EntryId where
 
 
 data Entry = Entry
-  { entryId       :: EntryId
+  { entryId       :: {-# UNPACK #-} !EntryId
   , description   :: Text
   , detail        :: Text
   , tags          :: [Text]
@@ -147,7 +146,7 @@ insertTodo date todo buffer@Buffer{ todos, dirtyCounts } =
 
 getBufferDayRange :: Buffer -> Maybe (Day, Day)
 getBufferDayRange Buffer { todos } =
-  case sort (Map.keys todos) of
+  case Map.keys todos of
     [] -> Nothing
     ks -> pure (head ks, last ks)
 

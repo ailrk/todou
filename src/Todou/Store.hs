@@ -343,7 +343,7 @@ flush handle = do
         Just todo@(Todo { dirty = True }) -> flushOnDirty handle todo
     pure $ buffer
       { dirtyCounts = 0
-      , todos = (fmap . fmap) (\todo -> todo { dirty = False }) buffer.todos
+      , todos = Map.map (fmap (\todo -> if todo.dirty then todo { dirty = False } else todo)) buffer.todos
       }
 
 

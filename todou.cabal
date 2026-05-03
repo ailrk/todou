@@ -89,6 +89,7 @@ library
       , http-types
       , lucid
       , network-uri
+      , psqueues
       , scotty
       , string-interpolate
       , text
