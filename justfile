@@ -1,10 +1,12 @@
 default:
   @just --list
 
+
 build:
     cabal2nix . > default.nix
     just buildjs
     nix build
+
 
 buildjs:
     #!/usr/bin/env bash
@@ -14,9 +16,11 @@ buildjs:
     rm -rf data/todou
     mv -fT js/dist/ data/todou
 
+
 dev:
     just buildjs
     cabal build
+
 
 repl:
     cabal repl
@@ -48,12 +52,7 @@ clean:
 
 
 watch:
-  ghcid -c "cabal repl todou" -s ":set args --storage=sqlite::memory: --port=5555"  -T "Todou.Main.main" -W
-
-
-watch1:
   ghcid -c "cabal repl todou" -s ":set args --storage=dir:_cache --port=5555"  -T "Todou.Main.main" -W
-
 
 
 tags:
