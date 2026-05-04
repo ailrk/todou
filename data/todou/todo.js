@@ -13,7 +13,7 @@ export function renderTodo(model) {
                 " "),
             h("div", { class: "control" },
                 h("span", { class: "today-icon icon", onclick: (_) => { navigate(`/`); } }),
-                h("span", { class: "stat-icon icon", onclick: (_) => { navigate(`/stat?date=${model.date}`); } }))),
+                h("span", { class: "stat-icon icon", onclick: (_) => { navigate(`/summary?date=${model.date}`); } }))),
         h("section", { class: "todoapp pg-todo" },
             renderInput(model),
             renderEntries(model),

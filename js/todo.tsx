@@ -73,7 +73,7 @@ export function renderTodo(model: Model): VNode {
           ></span>
           <span
             class="stat-icon icon"
-            onclick={(_: MouseEvent) => {  navigate(`/stat?date=${model.date}`); }}
+            onclick={(_: MouseEvent) => {  navigate(`/summary?date=${model.date}`); }}
           ></span>
         </div>
       </nav>

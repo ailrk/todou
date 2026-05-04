@@ -19,7 +19,7 @@ interface CFD {
 
 export interface Model {
   // tag
-  tag: "stat";
+  tag: "summary";
 
   // remote
   date: string;
@@ -44,7 +44,7 @@ export interface Model {
  * Render
  */
 
-export function renderStat(model: Model): VNode {
+export function renderSummary(model: Model): VNode {
   return (
     <div class="todou-container" tabindex="-1">
       <nav>
@@ -225,7 +225,7 @@ function renderCalendar(model: Model) {
 function renderFooterInfo(): VNode {
   return (
     <footer class="info">
-      <p>Todou statistics</p>
+      <p>Todou Summary</p>
     </footer>
   );
 }
@@ -515,7 +515,7 @@ export function mkEffects(model: Model) {
 
 
 export async function init(model: Model, signal: AbortSignal) {
-  console.log('init stat')
+  console.log('init summary')
 
   model.cfd = model.cfd1Month;
 

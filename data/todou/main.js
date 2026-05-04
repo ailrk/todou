@@ -1,6 +1,6 @@
 import { newVdom, initRouter, navigate } from "./vdom.js";
 import * as Todo from './todo.js';
-import * as Stat from './stat.js';
+import * as Summary from './summary.js';
 /*
  * Render
  */
@@ -8,8 +8,8 @@ function renderTodou(model) {
     switch (model.tag) {
         case "todo":
             return Todo.renderTodo(model);
-        case "stat":
-            return Stat.renderStat(model);
+        case "summary":
+            return Summary.renderSummary(model);
         case "init":
             return null;
     }
@@ -21,8 +21,8 @@ function dispatchEffects(model) {
     switch (model.tag) {
         case "todo":
             return [];
-        case "stat":
-            return Stat.mkEffects(model);
+        case "summary":
+            return Summary.mkEffects(model);
         case "init":
             return [];
     }
@@ -36,19 +36,19 @@ async function routeDate(model, matched, _, signal) {
     const data = await response.json();
     Todo.init(Object.assign(model, data), signal);
 }
-async function routeStat(model, _matched, params, signal) {
+async function routeSummary(model, _matched, params, signal) {
     const date = params["date"] ?? model.date;
     model.date = date;
-    const response = await fetch(`/api/stat?date=${date}`);
+    const response = await fetch(`/api/summary?date=${date}`);
     const data = await response.json();
-    Stat.init(Object.assign(model, data), signal);
+    Summary.init(Object.assign(model, data), signal);
 }
 async function routeMain(_model, _matched, params, signal) {
     window.location.href = "/";
 }
 const routes = [
-    /* Statistic page */
-    { path: /^\/stat(\?.*)?$/, handler: routeStat },
+    /* Summary page */
+    { path: /^\/summary(\?.*)?$/, handler: routeSummary },
     /* Render todo for a date */
     { path: /^\/(\d{4}-\d{2}-\d{2})$/, handler: routeDate },
     { path: /^\/?$/, handler: routeMain },

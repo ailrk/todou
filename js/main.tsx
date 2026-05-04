@@ -1,11 +1,12 @@
 import { newVdom, VDom, VNode, initRouter, navigate, Route } from "./vdom.js";
 import * as Todo from './todo.js';
-import * as Stat from './stat.js';
+import * as Summary from './summary.js';
+
 
 
 type Model
   = Todo.Model
-  | Stat.Model
+  | Summary.Model
   | {tag: 'init', date: string, vdom?: VDom};
 
 
@@ -18,8 +19,8 @@ function renderTodou(model: Model): VNode | null {
   switch (model.tag) {
     case "todo":
       return Todo.renderTodo(model);
-    case "stat":
-      return Stat.renderStat(model);
+    case "summary":
+      return Summary.renderSummary(model);
     case "init":
       return null;
   }
@@ -35,8 +36,8 @@ function dispatchEffects(model: Model) {
   switch (model.tag) {
     case "todo":
       return [];
-    case "stat":
-      return Stat.mkEffects(model);
+    case "summary":
+      return Summary.mkEffects(model);
     case "init":
       return [];
   }
@@ -56,15 +57,15 @@ async function routeDate(model: Model, matched: RegExpMatchArray, _: Record<stri
   Todo.init(Object.assign(model, data), signal);
 }
 
-async function routeStat(model: Model, _matched: RegExpMatchArray, params: Record<string, string>, signal: AbortSignal) {
+async function routeSummary(model: Model, _matched: RegExpMatchArray, params: Record<string, string>, signal: AbortSignal) {
   const date = params["date"] ?? model.date;
 
   model.date = date;
 
-  const response = await fetch(`/api/stat?date=${date}`);
-  const data = await response.json() as Stat.Model;
+  const response = await fetch(`/api/summary?date=${date}`);
+  const data = await response.json() as Summary.Model;
 
-  Stat.init(Object.assign(model, data), signal);
+  Summary.init(Object.assign(model, data), signal);
 }
 
 
@@ -74,8 +75,8 @@ async function routeMain(_model: Model, _matched: RegExpMatchArray, params: Reco
 
 
 const routes = [
-  /* Statistic page */
-  { path: /^\/stat(\?.*)?$/, handler: routeStat },
+  /* Summary page */
+  { path: /^\/summary(\?.*)?$/, handler: routeSummary },
 
   /* Render todo for a date */
   { path: /^\/(\d{4}-\d{2}-\d{2})$/, handler: routeDate },

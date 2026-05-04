@@ -4,7 +4,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Todou.Domain.Stat where
+module Todou.Domain.Summary where
 
 import Amazonka.Data (ToJSON (..), (.=))
 import Control.DeepSeq (NFData)
@@ -22,7 +22,7 @@ import Todou.Domain.Todo (Todo (..), Entry (..), b64EncodePresenceMap)
 import GHC.Generics (Generic)
 
 ------------------------------
--- Domain.Stat
+-- Domain.Summary
 
 
 -- | Cumulative Flow Resolution. This type indicates the scale of the
@@ -226,7 +226,7 @@ instance ToJSON Model where
     , "cfd3Month"   .= model.cfd3Month
     , "presenceMap" .= b64EncodePresenceMap model.presenceMap
     , "firstDay"    .= model.firstDay
-    , "tag"         .= Text.pack "stat"
+    , "tag"         .= Text.pack "summary"
     ]
 
 

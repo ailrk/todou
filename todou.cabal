@@ -66,7 +66,7 @@ common options
 library
     import: extensions, options
     exposed-modules:
-      Todou.Domain.Stat
+      Todou.Domain.Summary
       Todou.Domain.Todo
       Todou.Main
       Todou.Option

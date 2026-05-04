@@ -4,7 +4,7 @@ import { base64ToBitSet, fmtYM } from "./lib.js";
 /*
  * Render
  */
-export function renderStat(model) {
+export function renderSummary(model) {
     return (h("div", { class: "todou-container", tabindex: "-1" },
         h("nav", null,
             h("span", null,
@@ -146,7 +146,7 @@ function renderCalendar(model) {
 }
 function renderFooterInfo() {
     return (h("footer", { class: "info" },
-        h("p", null, "Todou statistics")));
+        h("p", null, "Todou Summary")));
 }
 function setupCanvas(canvas, model) {
     const container = canvas.parentElement;
@@ -375,7 +375,7 @@ export function mkEffects(model) {
  * Init
  */
 export async function init(model, signal) {
-    console.log('init stat');
+    console.log('init summary');
     model.cfd = model.cfd1Month;
     let date = new Date(model.date + "T00:00:00"); // use local time
     model.calendar = {

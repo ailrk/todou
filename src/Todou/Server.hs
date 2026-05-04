@@ -41,9 +41,9 @@ import Text.Read (readMaybe)
 import Web.Scotty (get, scotty, html, raw, setHeader, post, Parsable(..), json, ActionM, body, captureParam, status, text, middleware, delete, redirect, put, queryParamMaybe, captureParamMaybe, header, formParamMaybe, notFound)
 import Web.Cookie (parseCookies)
 import Data.Time.Calendar.Month (pattern MonthDay, Month)
-import Todou.Domain.Stat (CFR (..), createCFSegmentFromMonth)
+import Todou.Domain.Summary (CFR (..), createCFSegmentFromMonth)
 import Todou.Domain.Todo (Todo(..), Entry (..), Todo (..), EntryId (..), Buffer (..), pattern TodoLoaded, pattern TodoNotExists, pattern TodoNotLoaded, Model(..), updateTodo, deleteEntry, updateEntry, insertTodo, todoToModel)
-import Todou.Domain.Stat qualified as Stat
+import Todou.Domain.Summary qualified as Summary
 import Todou.Option
 import Todou.Store (Handle, getBufferMVar, flush, getPresences, loadTodo, modifyBuffer)
 import Web.Scotty.Trans (ActionT)
@@ -189,7 +189,7 @@ server Options { port, quite } handle = scotty port do
   -- static files are embeded.
   get "/main.js"                      do javascript $(embedFileRelative "data/todou/main.js")
   get "/todo.js"                      do javascript $(embedFileRelative "data/todou/todo.js")
-  get "/stat.js"                      do javascript $(embedFileRelative "data/todou/stat.js")
+  get "/summary.js"                   do javascript $(embedFileRelative "data/todou/summary.js")
   get "/lib.js"                       do javascript $(embedFileRelative "data/todou/lib.js")
   get "/vdom.js"                      do javascript $(embedFileRelative "data/todou/vdom.js")
   get "/web-app-manifest-192x192.png" do png        $(embedFileRelative "data/todou/web-app-manifest-192x192.png")
@@ -252,7 +252,7 @@ server Options { port, quite } handle = scotty port do
 
 
   -- Show statistic page
-  get "/api/stat" do
+  get "/api/summary" do
 
     getTimeZoneFromCookies >>= \case
       Just tz -> do
@@ -282,16 +282,16 @@ server Options { port, quite } handle = scotty port do
             seg2   = foldr1 (<>) [ createCFSegmentFromMonth m buffer.todos | m <- [start2..end] ]
             seg3   = foldr1 (<>) [ createCFSegmentFromMonth m buffer.todos | m <- [start3..end] ]
 
-        json Stat.Model { date        = date
-                        , cfd1Month   = Stat.toCFD (CFRMonthRange start1 end) seg1
-                        , cfd2Month   = Stat.toCFD (CFRMonthRange start2 end) seg2
-                        , cfd3Month   = Stat.toCFD (CFRMonthRange start3 end) seg3
-                        , presenceMap = presenceMap
-                        , firstDay    = firstDay
-                        }
+        json Summary.Model { date        = date
+                           , cfd1Month   = Summary.toCFD (CFRMonthRange start1 end) seg1
+                           , cfd2Month   = Summary.toCFD (CFRMonthRange start2 end) seg2
+                           , cfd3Month   = Summary.toCFD (CFRMonthRange start3 end) seg3
+                           , presenceMap = presenceMap
+                           , firstDay    = firstDay
+                           }
 
       Nothing ->
-        html . Lucid.renderText $ trampoline "/stat"
+        html . Lucid.renderText $ trampoline "/summary"
 
 
   -- add a new entry
