@@ -182,8 +182,9 @@ index = do
 
 
 server :: Options -> Handle -> IO ()
-server Options { port } handle = scotty port do
-  middleware logStdout
+server Options { port, quite } handle = scotty port do
+  when (not quite) do
+    middleware logStdout
 
   -- static files are embeded.
   get "/main.js"                      do javascript $(embedFileRelative "data/todou/main.js")

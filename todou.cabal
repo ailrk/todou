@@ -84,6 +84,7 @@ library
       , conduit
       , containers
       , directory
+      , deepseq
       , file-embed
       , filepath
       , http-types
@@ -138,3 +139,24 @@ test-suite todou-test
       , sqlite-simple
       , aeson
     default-language:    Haskell2010
+
+
+benchmark todou-bench
+  import: extensions, options
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      bench
+  main-is:             Main.hs
+  build-depends:
+      base >=4.16 && <5
+    , aeson
+    , bytestring
+    , containers
+    , criterion >=1.6
+    , http-types
+    , req
+    , text
+    , time
+    , todou
+    , deepseq
+    , unliftio
+  default-language: Haskell2010

@@ -8,3 +8,6 @@ cradle:
 
     - path: "test"
       component: "test:todou-test"
+
+    - path: "bench"
+      component: "benchmark:todou-bench"

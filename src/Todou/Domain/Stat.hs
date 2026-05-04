@@ -1,21 +1,25 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Todou.Domain.Stat where
 
+import Amazonka.Data (ToJSON (..), (.=))
+import Control.DeepSeq (NFData)
+import Data.Aeson qualified as Aeson
+import Data.ByteString (ByteString)
+import Data.Containers.ListUtils (nubOrd)
+import Data.List (sort)
+import Data.Map (Map)
+import Data.Map qualified as Map
+import Data.Maybe (catMaybes)
+import Data.Text qualified as Text
 import Data.Time (Year, Day, pattern YearMonthDay, gregorianMonthLength)
 import Data.Time.Calendar.Month (Month, pattern YearMonth, pattern MonthDay)
-import Amazonka.Data (ToJSON (..), (.=))
-import Data.Map qualified as Map
-import Data.Map (Map)
 import Todou.Domain.Todo (Todo (..), Entry (..), b64EncodePresenceMap)
-import Data.Aeson qualified as Aeson
-import Data.Maybe (catMaybes)
-import Data.List (sort)
-import Data.Containers.ListUtils (nubOrd)
-import Data.ByteString (ByteString)
-import Data.Text qualified as Text
+import GHC.Generics (Generic)
 
 ------------------------------
 -- Domain.Stat
@@ -27,7 +31,7 @@ data CFR
   = CFRYear Year
   | CFRMonth Month
   | CFRMonthRange Month Month
-  deriving (Show, Eq)
+  deriving (Generic, Show, Eq, NFData)
 
 
 -- | One step on the Cumulative Flow Diagram
@@ -36,7 +40,7 @@ data CF = CF
   , completed  :: Int
   , ongoing    :: Int
   }
-  deriving (Show, Eq)
+  deriving (Generic, Show, Eq, NFData)
 
 
 instance ToJSON CF where
@@ -52,7 +56,7 @@ data CFSegment = CFSegment
   { content        :: [CF]
   , completedAfter :: Map Day Int
   }
-  deriving (Show, Eq)
+  deriving (Generic, Show, Eq, NFData)
 
 
 instance Semigroup CFSegment where
@@ -191,7 +195,7 @@ data CFD = CFD
   , from           :: Day
   , to             :: Day
   }
-  deriving (Show, Eq)
+  deriving (Generic, Show, Eq, NFData)
 
 
 instance ToJSON CFD where

@@ -1,20 +1,24 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Todou.Domain.Todo where
 
+import Codec.Compression.Zlib qualified as Zlib
+import Control.DeepSeq (NFData)
 import Data.Aeson (ToJSON (..), FromJSON (..), KeyValue ((.=)), (.:))
-import Data.Text (Text)
-import Data.Time (Day, formatTime, defaultTimeLocale)
-import Data.Map (Map)
 import Data.Aeson qualified as Aeson
-import Data.Map qualified as Map
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
-import Codec.Compression.Zlib qualified as Zlib
 import Data.ByteString.Base64 qualified as B64
-import Data.Text.Encoding qualified as Text
+import Data.Map (Map)
+import Data.Map qualified as Map
+import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Text.Encoding qualified as Text
+import Data.Time (Day, formatTime, defaultTimeLocale)
+import GHC.Generics (Generic)
 
 
 ------------------------------
@@ -27,7 +31,7 @@ import Data.Text qualified as Text
 
 -- | EntryId unique on each todou file per day. To universally
 -- identify an entry you need date and the entryId.
-newtype EntryId = EntryId Int deriving (Show, Eq, Ord)
+newtype EntryId = EntryId Int deriving (Generic, Show, Eq, Ord, NFData)
 
 
 instance ToJSON EntryId where
@@ -45,7 +49,7 @@ data Entry = Entry
   , tags          :: [Text]
   , completedDate :: Maybe Day
   }
-  deriving (Eq, Show)
+  deriving (Generic, Eq, Show, NFData)
 
 
 instance ToJSON Entry where
@@ -75,7 +79,7 @@ data Todo = Todo
   , date    :: Day
   , dirty   :: Bool -- indicate if the Todo is modified.
   }
-  deriving (Show, Eq)
+  deriving (Generic, Show, Eq, NFData)
 
 
 instance ToJSON Todo where

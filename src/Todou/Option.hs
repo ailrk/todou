@@ -30,12 +30,13 @@ data StorageOption
 data Options = Options
   { port    :: Int
   , storage :: StorageOption
+  , quite  :: Bool
   }
   deriving (Show)
 
 
 defaultOptions :: Options
-defaultOptions = Options { storage = StorageNull, port = 0 }
+defaultOptions = Options { storage = StorageNull, port = 0, quite = False }
 
 
 -- | Parse cli argument.
