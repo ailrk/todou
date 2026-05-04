@@ -11,7 +11,7 @@ import Data.Text qualified as Text
 import Data.Time (Day)
 import Data.Time.Calendar (fromGregorian)
 import Data.Time.Calendar.Month (pattern MonthDay)
-import Todou.Domain.Stat (CFR(..), createCFSegmentFromMonth, toCFD)
+import Todou.Domain.Summary (CFR(..), createCFSegmentFromMonth, toCFD)
 import Todou.Domain.Todo
 import Todou.Option (StorageOption(..))
 import Todou.Store
@@ -80,8 +80,9 @@ sampleTodoText n = Text.unlines $
 
 benchParseTodo :: Int -> IO ()
 benchParseTodo n = do
-  let txt = sampleTodoText n
-  _ <- evaluate (force (parseTodo txt))
+  let txt    = sampleTodoText n
+      result = parseTodo txt
+  _ <- evaluate (force result)
   pure ()
 
 
@@ -95,7 +96,8 @@ benchDumpTodo todo = evaluate (force (dumpTodo todo)) >> pure ()
 
 benchLoadTodo :: Handle -> IO ()
 benchLoadTodo handle = do
-  _ <- loadTodo handle testDate
+  result <- loadTodo handle testDate
+  _      <- evaluate (force result)
   pure ()
 
 
@@ -106,8 +108,9 @@ benchModifyBuffer handle =
 
 benchGetPresences :: Handle -> IO ()
 benchGetPresences handle = do
-  buf <- readMVar (getBufferMVar handle)
-  _ <- getPresences buf
+  buf    <- readMVar (getBufferMVar handle)
+  result <- getPresences buf
+  _      <- evaluate (force result)
   pure ()
 
 
@@ -120,11 +123,11 @@ benchFlush handle = flush handle
 
 
 ------------------------------
--- Stat
+-- Summary
 
 
-benchStat :: Handle -> Day -> IO ()
-benchStat handle date = do
+benchSummary :: Handle -> Day -> IO ()
+benchSummary handle date = do
   buf <- readMVar (getBufferMVar handle)
   let MonthDay month _ = date
       months = iterate' pred month
@@ -163,6 +166,6 @@ main = withTempDirectory "/tmp" "todou-bench" \tmpDir -> do
         ]
 
     , bgroup "stat"
-        [ bench "toCFD 1 month"  $ nfIO (benchStat handle testDate)
+        [ bench "toCFD 1 month"  $ nfIO (benchSummary handle testDate)
         ]
     ]
