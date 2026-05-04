@@ -10,9 +10,9 @@ import Todou.Store (createHandle, spawnFlusher, getBuffer, loadAllTodos)
 main :: IO ()
 main = do
   options <- getArgs >>= checkArgs . parseArgs
-  handle <- createHandle options.storage
-  _ <- spawnFlusher handle
-  buffer <- getBuffer handle
+  handle  <- createHandle options.storage
+  _       <- spawnFlusher handle
+  buffer  <- getBuffer handle
   case getBufferDayRange buffer of
     Nothing -> pure ()
     Just (from, to) -> loadAllTodos handle from to

@@ -103,7 +103,7 @@ data Buffer = Buffer
   { todos       :: Map Day (Maybe Todo)
   , dirtyCounts :: Int
   }
-  deriving Show
+  deriving (Generic, Show, NFData)
 
 
 pattern TodoNotExists :: Maybe (Maybe Todo)

@@ -45,6 +45,7 @@ clean:
     cabal clean
     rm -f todou.hp
     rm -f todou.eventlog
+    rm -f todou.eventlog.html
     rm -f todou.ps
     rm -f todou.pdf
     rm -f todou.prof

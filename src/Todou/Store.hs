@@ -12,7 +12,7 @@ import Conduit qualified
 import Control.Applicative (Alternative((<|>)))
 import Control.Concurrent (threadDelay, forkIO, ThreadId, readMVar, modifyMVar_, modifyMVar)
 import Control.Concurrent.MVar (MVar, newMVar)
-import Control.Exception (try, SomeException, Exception (..))
+import Control.Exception (try, SomeException, Exception (..), evaluate)
 import Control.Monad (unless, forM_, forever, join, void, guard)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
@@ -43,6 +43,7 @@ import Data.Bifunctor (Bifunctor(..))
 import Data.Word (Word8)
 import Todou.Domain.Todo (Todo(..), Entry (..), Todo (..), EntryId (..), Buffer (..), pattern TodoLoaded, pattern TodoNotExists, pattern TodoNotLoaded, getBufferDayRange)
 import Todou.Option ( Bucket, StorageOption(..) )
+import Control.DeepSeq (force)
 
 
 ------------------------------
@@ -338,13 +339,15 @@ flush handle = do
   modifyBuffer handle \buffer -> do
     unless (buffer.dirtyCounts == 0) do
       forM_ buffer.todos \case
-        Nothing -> pure ()
-        Just (Todo { dirty = False }) -> pure ()
+        Nothing                           -> pure ()
+        Just (Todo { dirty = False })     -> pure ()
         Just todo@(Todo { dirty = True }) -> flushOnDirty handle todo
-    pure $ buffer
-      { dirtyCounts = 0
-      , todos = Map.map (fmap (\todo -> if todo.dirty then todo { dirty = False } else todo)) buffer.todos
-      }
+    let newBuffer = buffer
+          { dirtyCounts = 0
+          , todos = Map.map (fmap (\todo -> if todo.dirty then todo { dirty = False } else todo)) buffer.todos
+          }
+
+    evaluate (force newBuffer)
 
 
 flushOnDirty :: Handle -> Todo -> IO ()
@@ -429,10 +432,10 @@ getPresences buffer@Buffer { todos } =
 
 spawnFlusher :: Handle -> IO ThreadId
 spawnFlusher handle = forkIO . forever $ do
-  result <- try  do flush handle
+  result <- try do flush handle
   case result of
     Left (e :: SomeException) -> putStrLn (displayException e)
-    Right _ -> pure ()
+    Right _                   -> pure ()
   threadDelay flushPeriod
   where
     flushPeriod = 5 * 1000000
