@@ -5,7 +5,6 @@ build:
     cabal2nix . > default.nix
     just buildjs
     nix build
-    graphmod | dot -Tsvg -o modules.svg
 
 buildjs:
     #!/usr/bin/env bash
@@ -21,6 +20,10 @@ dev:
 
 repl:
     cabal repl
+
+
+deps:
+    graphmod | dot -Tsvg -o modules.svg
 
 
 profile:
