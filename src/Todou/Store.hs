@@ -13,7 +13,7 @@ import Control.Applicative (Alternative((<|>)))
 import Control.Concurrent (threadDelay, forkIO, ThreadId, readMVar, modifyMVar_, modifyMVar)
 import Control.Concurrent.MVar (MVar, newMVar)
 import Control.Exception (try, SomeException, Exception (..), evaluate)
-import Control.Monad (unless, forM_, forever, join, void, guard)
+import Control.Monad (unless, forM_, forever, join, void, guard, (<$!>), (>=>))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
 import Data.ByteString.Char8 qualified as Char8
@@ -43,7 +43,6 @@ import Data.Bifunctor (Bifunctor(..))
 import Data.Word (Word8)
 import Todou.Domain.Todo (Todo(..), Entry (..), Todo (..), EntryId (..), Buffer (..), pattern TodoLoaded, pattern TodoNotExists, pattern TodoNotLoaded, getBufferDayRange)
 import Todou.Option ( Bucket, StorageOption(..) )
-import Control.DeepSeq (force)
 
 
 ------------------------------
@@ -283,7 +282,7 @@ getBuffer handle = readMVar $ getBufferMVar handle
 
 
 modifyBuffer :: Handle -> (Buffer -> IO Buffer) -> IO ()
-modifyBuffer handle = modifyMVar_ (getBufferMVar handle)
+modifyBuffer handle f = modifyMVar_ (getBufferMVar handle) (f >=> evaluate)
 
 
 -- | Load Todo if it's not already cached in Buffer.
@@ -342,12 +341,17 @@ flush handle = do
         Nothing                           -> pure ()
         Just (Todo { dirty = False })     -> pure ()
         Just todo@(Todo { dirty = True }) -> flushOnDirty handle todo
-    let newBuffer = buffer
+
+    let clearDirty todo
+          | todo.dirty = todo { dirty = False }
+          | otherwise  = todo
+
+        newBuffer  = buffer
           { dirtyCounts = 0
-          , todos = Map.map (fmap (\todo -> if todo.dirty then todo { dirty = False } else todo)) buffer.todos
+          , todos       = Map.map (clearDirty <$!>) buffer.todos
           }
 
-    evaluate (force newBuffer)
+    pure newBuffer
 
 
 flushOnDirty :: Handle -> Todo -> IO ()

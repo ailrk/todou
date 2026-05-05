@@ -1,6 +1,6 @@
 *.aux
 *.eventlog
-*.eventlog.*.html
+*.eventlog.*html
 *.hp
 *.pdf
 *.prof
